@@ -13,17 +13,17 @@ export default function Login() {
     try {
       setError("");
       setLoading(true);
-      
-      console.log("Mencoba login dengan:", { email, password }); // Debug
-      
+
       const res = await login(email, password);
-      
-      console.log("Response login:", res); // Debug
-      
+
+      // Simpan token
       localStorage.setItem("token", res.token);
-      navigate("/dashboard");
+      
+      // Force reload untuk trigger route check
+      window.location.href = "/dashboard";
+      
     } catch (err: any) {
-      console.error("Login error:", err); // Debug
+      console.error("Login error:", err);
       setError(err.response?.data?.message || "Login gagal");
     } finally {
       setLoading(false);
@@ -31,18 +31,21 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-96 p-6 border rounded shadow-lg bg-white">
-        <h1 className="text-xl mb-4 font-bold">Login Dashboard</h1>
-        
+    <div className="h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600">
+      <div className="w-96 p-6 border rounded-lg shadow-2xl bg-white">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Zentara</h1>
+          <p className="text-gray-500 mt-1">Dashboard Login</p>
+        </div>
+
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
             {error}
           </div>
         )}
-        
+
         <input
-          className="border w-full mb-2 p-2 rounded"
+          className="border w-full mb-3 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Email"
           type="email"
           value={email}
@@ -50,16 +53,16 @@ export default function Login() {
           disabled={loading}
         />
         <input
-          className="border w-full mb-4 p-2 rounded"
+          className="border w-full mb-4 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
-          onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+          onKeyPress={(e) => e.key === "Enter" && handleLogin()}
         />
         <button
-          className="bg-black text-white w-full py-2 rounded disabled:bg-gray-400"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white w-full py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
           onClick={handleLogin}
           disabled={loading || !email || !password}
         >

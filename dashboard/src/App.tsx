@@ -1,71 +1,98 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { isLoggedIn, getUserFromToken } from "./utils/auth";
+
+// Pages
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
+
+// Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
-import PenulisDashboard from "./pages/penulis/Dashboard";
 import AllArticles from "./pages/admin/AllArticles";
 import UsersManagement from "./pages/admin/UsersManagement";
 import CategoriesManagement from "./pages/admin/CategoriesManagement";
+
+// Penulis Pages
+import PenulisDashboard from "./pages/penulis/Dashboard";
 import MyArticles from "./pages/penulis/MyArticles";
 import CategoriesView from "./pages/penulis/CategoriesView";
-import Settings from "./pages/Settings";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { isLoggedIn, getUserFromToken } from "./utils/auth";
+
+// Shared Pages
+import Settings from "./pages/shared/Settings";
+
+// Role-based component wrapper
+function RoleBasedDashboard() {
+  const user = getUserFromToken();
+  
+  if (!user) return <Navigate to="/login" />;
+  
+  return user.role === "admin" ? <AdminDashboard /> : <PenulisDashboard />;
+}
+
+function RoleBasedArticles() {
+  const user = getUserFromToken();
+  
+  if (!user) return <Navigate to="/login" />;
+  
+  return user.role === "admin" ? <AllArticles /> : <MyArticles />;
+}
+
+function RoleBasedCategories() {
+  const user = getUserFromToken();
+  
+  if (!user) return <Navigate to="/login" />;
+  
+  return user.role === "admin" ? <CategoriesManagement /> : <CategoriesView />;
+}
+
+// Admin-only wrapper
+function AdminOnly({ children }: { children: JSX.Element }) {
+  const user = getUserFromToken();
+  
+  if (!user) return <Navigate to="/login" />;
+  if (user.role !== "admin") return <Navigate to="/dashboard" />;
+  
+  return children;
+}
 
 export default function App() {
-  const user = getUserFromToken();
-  const isAdmin = user?.role === "admin";
-
   return (
     <BrowserRouter>
       <Routes>
-        {/* ROOT REDIRECT */}
+        {/* Public Route */}
         <Route
-          path="/"
-          element={
-            isLoggedIn() ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
-          }
+          path="/login"
+          element={isLoggedIn() ? <Navigate to="/dashboard" /> : <Login />}
         />
 
-        <Route path="/login" element={<Login />} />
-
-        {/* PROTECTED ROUTES */}
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
+          element={isLoggedIn() ? <Layout /> : <Navigate to="/login" />}
         >
-          {/* DEFAULT DASHBOARD BASED ON ROLE */}
+          {/* Role-based routes */}
+          <Route index element={<RoleBasedDashboard />} />
+          <Route path="articles" element={<RoleBasedArticles />} />
+          <Route path="categories" element={<RoleBasedCategories />} />
+          
+          {/* Admin-only routes */}
           <Route
-            index
+            path="users"
             element={
-              isAdmin ? <AdminDashboard /> : <PenulisDashboard />
+              <AdminOnly>
+                <UsersManagement />
+              </AdminOnly>
             }
           />
 
-          {/* ADMIN ONLY ROUTES */}
-          {isAdmin && (
-            <>
-              <Route path="articles" element={<AllArticles />} />
-              <Route path="users" element={<UsersManagement />} />
-              <Route path="categories" element={<CategoriesManagement />} />
-            </>
-          )}
-
-          {/* PENULIS ONLY ROUTES */}
-          {!isAdmin && (
-            <>
-              <Route path="articles" element={<MyArticles />} />
-              <Route path="categories" element={<CategoriesView />} />
-            </>
-          )}
-
-          {/* SHARED ROUTES */}
+          {/* Shared Routes */}
           <Route path="settings" element={<Settings />} />
         </Route>
+
+        {/* Root Redirect */}
+        <Route
+          path="/"
+          element={<Navigate to={isLoggedIn() ? "/dashboard" : "/login"} />}
+        />
 
         {/* 404 */}
         <Route path="*" element={<Navigate to="/dashboard" />} />
