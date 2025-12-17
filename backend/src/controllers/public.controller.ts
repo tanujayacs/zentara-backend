@@ -9,8 +9,22 @@ export const getPublikasiBerita = async (_req: any, res: any) => {
     });
   }
 
-  // ⬇️ FORMAT DISAMAKAN DENGAN API WINNICODE
+  // Format data: flatten kategori
+  const formattedData = data?.map((item: any) => ({
+    id: item.id,
+    judul: item.judul,
+    slug: item.slug,
+    penulis: item.penulis,
+    kategori: item.categories?.name || "Uncategorized", // ← JOIN dari table categories
+    deskripsi: item.deskripsi,
+    gambar: item.gambar,
+    status: item.status,
+    visitor_count: item.visitor_count,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+  }));
+
   res.json({
-    data,
+    data: formattedData,
   });
 };
